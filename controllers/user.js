@@ -146,9 +146,33 @@ const login = async (req, res) => {
     }
 }
 
+const profile = async (req, res) =>{
+    //recibir el parametro del id de usuario por url
+    const id = req.params.id;
+    //Consulta para datos de usuario
+    let userProfile = await User.findById(id)
+        .select({ password: 0, role: 0 })
+        .exec()
+    if (!userProfile) {
+        return res.status(404).send({
+            status: "error",
+            message: "El usuario no existe o hubo un error"
+        })
+    }
+    
+
+    
+    //Devolver resultado
+    return res.status(200).send({
+        status: "Success",
+        user: userProfile
+    })
+}
+
 //Exportaciones
 module.exports = {
     pruebaUser,
     register,
-    login
+    login,
+    profile
 }
