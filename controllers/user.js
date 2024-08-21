@@ -5,6 +5,8 @@ const bcrypt = require("bcrypt");
 const user = require("../models/user");
 const jwt = require("../services/jwt");
 const mongoosePagination = require("mongoose-pagination");
+const fs = require("fs");
+const path = require("path")
 
 
 //Acciones de prueba
@@ -259,6 +261,77 @@ const update = async (req, res) => {
     }
  
 };
+
+const upload = async (req, res) => {
+
+    //Recoger fichero de imagen y comprobar que existe
+    if (!req.file){ 
+        return res.status(200).send({
+            status: "error",   
+            message: "No se ha seleccionado ninguna imagen"
+        });
+    }
+    //Conseguir el nombre del archivo
+    let image = req.file.originalname;
+
+    let imageSplit = image.split("\.");
+
+    let extension = imageSplit[imageSplit.length-1];
+
+    //Comprobar extensiones
+
+    if(extension != "png" && extension != "jpeg" && extension != "jpg" && extension != "gif"){
+        const filePath = req.file.path;
+        const fileDeleted = fs.unlinkSync(filePath);
+
+        return res.status(400).send({
+            status: "error",
+            message: "Extension no valida",
+            fileDeleted
+            });
+    }
+
+    try {
+        // Si es correcto guardar imagen en bbdd
+        let updatedUser = await User.findByIdAndUpdate(req.user.id, { image: req.file.filename }, { new: true });
+        // Devolver respuesta
+        return res.status(200).send({
+            status: 'success',
+            message: 'Imagen subida con exito',
+            user: updatedUser,
+            file: req.file
+        })
+    } catch (error) {
+        return res.status(400).send({
+            status: 'error',
+            message: 'Error al subir la imagen',
+          
+        })
+    }
+
+}
+
+const avatar = (req, res) => {
+    //Sacar el parametro de la url
+    const file = req.params.file;
+
+
+    //Montar el path real de la imagen
+    const filePath = "./uploads/avatars/"+file;
+
+    //Comprobar si existe
+    fs.stat(filePath, (error, exist) => {
+        if (!exist) {
+            return res.status(404).send({
+                status: "error",
+                message: "Imagen no encontrada",
+                });
+        }
+        return res.sendFile(path.resolve(filePath));
+
+    });    
+
+}
 //Exportaciones
 module.exports = {
     pruebaUser,
@@ -266,5 +339,8 @@ module.exports = {
     login,
     profile,
     list,
-    update
+    update,
+    upload,
+    avatar
+
 }
