@@ -6,7 +6,8 @@ const user = require("../models/user");
 const jwt = require("../services/jwt");
 const mongoosePagination = require("mongoose-pagination");
 const fs = require("fs");
-const path = require("path")
+const path = require("path");
+const followService = require("../services/followUsersId");
 
 
 //Acciones de prueba
@@ -192,6 +193,7 @@ const list = async (req, res) =>{
         })
     }
 
+    let followUserId = await followService.followUsersId(req.user.id);
     //Devolver resultado
     return res.status(200).send({
         status: "Success",
@@ -199,7 +201,9 @@ const list = async (req, res) =>{
         itemsPerPage,
         page,
         totalUsers,
-        pages: Math.ceil(totalUsers/itemsPerPage)
+        pages: Math.ceil(totalUsers/itemsPerPage),
+        user_following: followUserId.following,
+        user_followed: followUserId.followed
     })
 }
 
